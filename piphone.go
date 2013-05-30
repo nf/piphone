@@ -47,6 +47,14 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	switch r.FormValue("Digits") {
+	case "6":
+		fmt.Fprint(w, gather)
+		return
+	case "5359":
+		fmt.Fprint(w, dialConf)
+		return
+	}
 	o, _ := strconv.Atoi(r.FormValue("offset"))
 	if o < 0 || o >= len(digits) {
 		fmt.Fprint(w, hangup)
@@ -62,9 +70,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 const say = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say>%v</Say>
+    <Gather timeout="0">
+        <Say>%v</Say>
+    </Gather>
     <Redirect method="GET">http://pi-phone.appspot.com/?offset=%v</Redirect>
 </Response>`
 
 const hangup = `<?xml version="1.0" encoding="UTF-8"?>
 <Response><Hangup/></Response>`
+
+const gather = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather timeout="10"/>
+    <Hangup/>
+</Response>`
+
+const dialConf = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Dial><Conference>Pi chat</Conference></Dial>
+</Response>`
