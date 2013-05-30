@@ -1,0 +1,4 @@
+PiPhone is a Go App Engine app that serves TwiML (see twilio.com) that speaks
+the first 10k digits of Pi and then hangs up.
+
+By Andrew Gerrand <adg@golang.org>
