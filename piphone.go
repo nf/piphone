@@ -18,11 +18,10 @@ package piphone
 
 import (
 	"bufio"
-	"fmt"
-	"net/http"
 	"os"
-	"strconv"
 	"strings"
+
+	"github.com/nf/twilio"
 )
 
 var digits []string
@@ -43,21 +42,13 @@ func init() {
 		panic(err)
 	}
 
-	http.HandleFunc("/", handler)
+	twilio.Handle("/", handler)
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	switch r.FormValue("Digits") {
-	case "6":
-		fmt.Fprint(w, gather)
-		return
-	case "5359":
-		fmt.Fprint(w, dialConf)
-		return
-	}
-	o, _ := strconv.Atoi(r.FormValue("offset"))
+func handler(c twilio.Context) {
+	o := c.IntValue("Offset")
 	if o < 0 || o >= len(digits) {
-		fmt.Fprint(w, hangup)
+		c.Hangup()
 		return
 	}
 	d := ""
@@ -65,27 +56,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		d = "3 point "
 	}
 	d += digits[o]
-	fmt.Fprintf(w, say, d, o+1)
+	c.Responsef(`
+		<Say>%v</Say>
+		<Redirect method="GET">http://pi-phone.appspot.com/?Offset=%v</Redirect>
+	`, d, o+1)
 }
-
-const say = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Gather timeout="0">
-        <Say>%v</Say>
-    </Gather>
-    <Redirect method="GET">http://pi-phone.appspot.com/?offset=%v</Redirect>
-</Response>`
-
-const hangup = `<?xml version="1.0" encoding="UTF-8"?>
-<Response><Hangup/></Response>`
-
-const gather = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Gather timeout="10"/>
-    <Hangup/>
-</Response>`
-
-const dialConf = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-    <Dial><Conference>Pi chat</Conference></Dial>
-</Response>`
